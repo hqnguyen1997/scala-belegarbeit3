@@ -26,7 +26,7 @@ class NaiveBayesClassificator(train:List[Map[String, Any]], targetColumn:String,
   }
 
   /**
-   * predict and return probability corresponding each targer class
+   * predict and return probability corresponding each target class
    * @param data
    */
   def predictProba(data:Map[String, Any]):Map[Any, Double] = {
