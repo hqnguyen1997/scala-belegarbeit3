@@ -9,11 +9,16 @@ object TitanicTraining {
   val trainingDataSetVer1 = TitanicDataSet.getPreparedDataSetSixColumns()
   val trainingDataSetVer2 = TitanicDataSet.getPreparedDataSetSevenColumns()
   val trainingDataSetVer3 = TitanicDataSet.getPreparedDatasetEigthColumns()
+  // No idea why the function loadData always adds survived column while loading "test.csv"
+  // And fills this column with -1
+  // So this column should be filtered out
+  val testData = Utils.loadDataCSV("test.csv")
+
  def main(args: Array[String]) {
     println("Start training")
-    predictAndCreateCsv(trainingDataSetVer1, "trainingVer1.csv")
-    predictAndCreateCsv(trainingDataSetVer2, "trainingVer2.csv")
-    predictAndCreateCsv(trainingDataSetVer3, "trainingVer3.csv")
+    predictAndCreateCsv(trainingDataSetVer1, testData,"trainingVer1.csv")
+    predictAndCreateCsv(trainingDataSetVer2, testData,"trainingVer2.csv")
+    predictAndCreateCsv(trainingDataSetVer3, testData,"trainingVer3.csv")
   }
 
   /**
@@ -21,29 +26,45 @@ object TitanicTraining {
    * then predict all data in the test datasets
    * then create new csv file with prediction, of a person survived or not.
    * (csv with column "survived")
-   * @param train
+   * @param train (trainning data, targetcolumn, featurecolumn)
+   * @param test Test data sets
+   * @param outputFileName
    * @return
    */
-  def predictAndCreateCsv(train:(List[Map[String,Any]], String, List[String]), fileName: String) = {
-    val outputFile = new BufferedWriter(new FileWriter(fileName))
+  def predictAndCreateCsv(train:(List[Map[String,Any]], String, List[String]), test:List[Map[String,Any]], outputFileName: String) = {
+    val outputFile = new BufferedWriter(new FileWriter(outputFileName))
     val csvWriter = new CSVWriter(outputFile)
+    val featureColumn = train._2
+    // Train model
+    val clf = new NaiveBayesClassificator(train._1, train._2, train._3)
+    clf.train()
 
+    // Create CSV
     val csvTableHeaderFields = ArrayBuffer[String]()
-    train._3.foreach(title => csvTableHeaderFields += title)
-    csvTableHeaderFields += train._2
+    // No idea why the function loadData always adds survived column while loading "test.csv"
+    // And fills this column with -1
+    // So this column should be filtered out
+    val filteredTestData = test.map(item => item.filter(column => column._1 != featureColumn))
 
-    val listOfRecords = new ListBuffer[Array[String]]()
-    listOfRecords += csvTableHeaderFields.toArray
+    filteredTestData(0).foreach(item => csvTableHeaderFields += item._1)
+    csvTableHeaderFields += featureColumn // target class column
 
-    train._1.foreach(map => {
-      val rowFieldArrayBuffer = ArrayBuffer[String]()
-      for ((key,value) <- map) {
-        rowFieldArrayBuffer += value.toString
-      }
-      listOfRecords += rowFieldArrayBuffer.toArray
+    val records = new ListBuffer[Array[String]]()
+    records += csvTableHeaderFields.toArray
+
+    filteredTestData.foreach(data => {
+      val record = ArrayBuffer[String]()
+
+      csvTableHeaderFields.foreach(header => {
+        if (header != featureColumn)
+          record += data.getOrElse(header, "NaN").toString
+      })
+      record += clf.predict(data).toString
+
+      records += record.toArray
     })
-
-    csvWriter.writeAll(listOfRecords.toList)
+    // Write to file
+    csvWriter.writeAll(records.toList)
     outputFile.close()
   }
 }

@@ -31,8 +31,8 @@ class NaiveBayesClassificator(train:List[Map[String, Any]], targetColumn:String,
    */
   def predictProba(data:Map[String, Any]):Map[Any, Double] = {
     trainingTree.map(item => {
-      (item._1, data.map(feature => { //feature._1 -> feature name, feature._2 -> feature value
-        item._2.getOrElse(feature._1, null).getOrElse(feature._2, 1.0)
+      (item._1, featureColumns.map(featureName => { //feature._1 -> feature name, feature._2 -> feature value
+        item._2.getOrElse(featureName, null).getOrElse(data.getOrElse(featureName, ""), 1.0)
       }).foldLeft(1.0)((X, Y) => X*Y))
     })
   }
