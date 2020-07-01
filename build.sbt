@@ -18,6 +18,7 @@ run := Defaults.runTask(fullClasspath in Runtime, mainClass in run in Compile, r
 
 // Add dependency on ScalaFX library
 libraryDependencies += "org.scalafx" %% "scalafx" % "12.0.2-R18"
+libraryDependencies += "au.com.bytecode" % "opencsv" % "2.4"
 
 // Determine OS version of JavaFX binaries
 lazy val osName = System.getProperty("os.name") match {
